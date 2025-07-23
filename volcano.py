@@ -194,7 +194,7 @@ numeric_cols = merged.select_dtypes(include=[np.number]).columns.tolist()
 condition1 = st.text_input("condition 1", key="cond1")
 condition2 = st.text_input("condition 2", key="cond2")
 
-if not condition1 and or not condition2:
+if not condition1 or not condition2:
     st.warning("Name each group.")
     st.stop()
 

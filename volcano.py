@@ -301,12 +301,12 @@ st.dataframe(stats_df, use_container_width=True)
 to_csv_download(stats_df, "all_proteins_with_stats.csv")
 
 # Save figure as PNG
-svg_bytes = fig.to_image(format="svg", width=1500, height=1000, scale=2)
+html_bytes = fig.to_html(full_html=False).encode("utf-8")
 st.download_button(
-    label="Download volcano_plot.svg",
-    data=svg_bytes,
-    file_name="volcano_plot.svg",
-    mime="image/svg+xml"
+    label="Download interactive plot (HTML)",
+    data=html_bytes,
+    file_name="volcano_plot.html",
+    mime="text/html"
 )
 
 # --- Sanity check vs R

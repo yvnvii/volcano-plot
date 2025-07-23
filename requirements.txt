@@ -5,3 +5,4 @@ scipy==1.16.0
 statsmodels==0.14.4
 plotly==6.2.0
 openpyxl==3.1.5
+kaleido==1.0.0

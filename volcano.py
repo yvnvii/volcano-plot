@@ -310,19 +310,13 @@ st.download_button(
 )
 
 # --- Sanity check vs R
-st.subheader("Sanity Check (Compare with R)")
+st.subheader("Sanity Check")
 prot = st.text_input("Protein to inspect (exact match)")
 if prot:
     row_py = stats_df[stats_df[protein_col] == prot][[
         protein_col, "avg_healthy", "avg_pe", "log2FC", "p_value"
     ] + (["q_value"] if use_fdr else [])]
     st.write("Python:", row_py)
-
-    with st.expander("Paste R values here"):
-        avg_h_r   = st.number_input("R avg_healthy", value=0.0, format="%.6g")
-        avg_p_r   = st.number_input("R avg_pe", value=0.0, format="%.6g")
-        log2fc_r  = st.number_input("R log2FC", value=0.0, format="%.6g")
-        p_r       = st.number_input("R p_value", value=1.0, format="%.6g")
 
 # --- Optional debug block
 with st.expander("DEBUG: raw / normalized / totals for one protein"):

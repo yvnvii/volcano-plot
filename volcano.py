@@ -68,9 +68,9 @@ def _row_pvalue(row, healthy_cols, pe_cols):
 def compute_stats(df: pd.DataFrame, healthy_cols: list[str], pe_cols: list[str]) -> pd.DataFrame:
     """Add avg_healthy, avg_pe, log2FC, p_value, neg_log10_pval columns to df."""
     df = df.copy()
-    df["avg_healthy"] = df[healthy_cols].mean(axis=1)
-    df["avg_pe"] = df[pe_cols].mean(axis=1)
-    df["log2FC"] = np.log2((df["avg_pe"] + 1e-12) / (df["avg_healthy"] + 1e-12))
+    df["avg_condition1"] = df[healthy_cols].mean(axis=1)
+    df["avg_condition2"] = df[pe_cols].mean(axis=1)
+    df["log2FC"] = np.log2((df["avg_condition2"] + 1e-12) / (df["avg_condition1"] + 1e-12))
 
     df["p_value"] = df.apply(_row_pvalue, axis=1, args=(healthy_cols, pe_cols))
     df["neg_log10_pval"] = -np.log10(df["p_value"].replace(0, np.nextafter(0, 1)))
@@ -315,7 +315,7 @@ st.download_button(
 
 # --- Sanity check vs R
 st.subheader("Sanity Check")
-prot = st.text_input("Protein to inspect (exact match)")
+prot = st.text_input("Protein Name to inspect (exact match) e.g., FABP5_HUMAN")
 if prot:
     row_py = stats_df[stats_df[protein_col] == prot][[
         protein_col, f"avg_{condition1}", f"avg_{condition2}", "log2FC", "p_value"
@@ -344,6 +344,17 @@ with st.expander("DEBUG: raw / normalized / totals for one protein"):
 
             st.write(f"avg_{condition1}: ", f"{norm_row[healthy_cols].mean(axis=1).iloc[0]:.3E}")
             st.write(f"avg_{condition2}: ", f"{norm_row[pe_cols].mean(axis=1).iloc[0]:.3E}")
+
+            st.write("Python:")
+            st.dataframe(
+                row_py.rename(columns={
+                    "avg_condition1": f"avg_{condition1}",
+                    "avg_condition2": f"avg_{condition2}"
+                    })
+                )
+
+
+
         else:
             st.warning(f"Protein '{prot}' not found in raw or normalized data.")
 

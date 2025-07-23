@@ -190,11 +190,12 @@ st.dataframe(merged, use_container_width=True)
 st.markdown("### Select Sample Columns")
 numeric_cols = merged.select_dtypes(include=[np.number]).columns.tolist()
 
-condition1 = st.text_input("condition 1")
-condition2 = st.text_input("condition 2")
 
-healthy_cols = st.multiselect(f"{condition1}", numeric_cols, default=[])
-pe_cols = st.multiselect(f"{condition2}", numeric_cols, default=[])
+condition1 = st.text_input("condition 1", key="cond1")
+condition2 = st.text_input("condition 2", key="cond2")
+
+healthy_cols = st.multiselect(f"{condition1}", numeric_cols, default=[], key="healthy_cols")
+pe_cols = st.multiselect(f"{condition2}", numeric_cols, default=[], key="pe_cols")
 
 if not healthy_cols or not pe_cols:
     st.warning("Select at least one column for each group.")
@@ -285,7 +286,8 @@ st.plotly_chart(fig, use_container_width=True)
 
 # --- Tables & downloads
 st.subheader("Results Tables")
-cols_to_show = [protein_col, label_col, "avg_pe", "avg_healthy", "log2FC", "p_value", y_axis]
+cols_to_show = [protein_col, label_col, "avg_condition2", "avg_condition1", "log2FC", "p_value", y_axis]
+
 if use_fdr:
     cols_to_show.insert(cols_to_show.index("p_value") + 1, "q_value")
 
@@ -342,20 +344,21 @@ with st.expander("DEBUG: raw / normalized / totals for one protein"):
             })
             st.dataframe(debug_tbl)
 
-            st.write(f"avg_{condition1}: ", f"{norm_row[healthy_cols].mean(axis=1).iloc[0]:.3E}")
-            st.write(f"avg_{condition2}: ", f"{norm_row[pe_cols].mean(axis=1).iloc[0]:.3E}")
+            # 再定義（重要）
+            row_py = stats_df[stats_df[protein_col] == prot][[
+                protein_col, "avg_condition1", "avg_condition2", "log2FC", "p_value"
+            ] + (["q_value"] if use_fdr else [])]
 
             st.write("Python:")
             st.dataframe(
                 row_py.rename(columns={
                     "avg_condition1": f"avg_{condition1}",
                     "avg_condition2": f"avg_{condition2}"
-                    })
-                )
-
-
-
+                })
+            )
         else:
             st.warning(f"Protein '{prot}' not found in raw or normalized data.")
+
+
 
 st.success("Done! Adjust thresholds or selections above to update.")

@@ -24,6 +24,7 @@ Date: July 22 2025
 import io
 import numpy as np
 import pandas as pd
+import base64
 import streamlit as st
 from scipy.stats import ttest_ind, mannwhitneyu
 from statsmodels.stats.multitest import multipletests
@@ -301,14 +302,9 @@ to_csv_download(stats_df, "all_proteins_with_stats.csv")
 
 # Save figure as PNG
 png_buffer = io.BytesIO()
-fig.write_image(png_buffer, format="png", width=1500, height=1000, scale=2)
-png_buffer.seek(0)
-st.download_button(
-    label="Download volcano_plot.png",
-    data=png_buffer,
-    file_name="volcano_plot.png",
-    mime="image/png",
-)
+
+img_bytes = fig.to_image(format="png", width=1500, height=1000, scale=2)
+st.download_button("Download volcano_plot.png", data=img_bytes, file_name="volcano_plot.png")
 
 # --- Sanity check vs R
 st.subheader("Sanity Check (Compare with R)")

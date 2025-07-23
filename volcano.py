@@ -189,8 +189,12 @@ st.dataframe(merged, use_container_width=True)
 # --- Select sample columns
 st.markdown("### Select Sample Columns")
 numeric_cols = merged.select_dtypes(include=[np.number]).columns.tolist()
-healthy_cols = st.multiselect("Healthy sample columns", numeric_cols, default=[])
-pe_cols = st.multiselect("PE sample columns", numeric_cols, default=[])
+
+condition1 = st.text_input("condition 1")
+condition2 = st.text_input("condition 2")
+
+healthy_cols = st.multiselect(f"{condition1}", numeric_cols, default=[])
+pe_cols = st.multiselect(f"{condition2}", numeric_cols, default=[])
 
 if not healthy_cols or not pe_cols:
     st.warning("Select at least one column for each group.")
@@ -198,18 +202,18 @@ if not healthy_cols or not pe_cols:
 
 # Optional: drop worst columns
 with st.expander("Optional: Drop one column per group with most 0/NA"):
-    do_drop_h = st.checkbox("Drop worst Healthy column", value=False)
-    do_drop_p = st.checkbox("Drop worst PE column", value=False)
+    do_drop_h = st.checkbox("Drop worst column from {condition1}", value=False)
+    do_drop_p = st.checkbox("Drop worst column from {condition2}", value=False)
 
 if do_drop_h:
     col_h_rm = find_most_zero_na_col(merged, healthy_cols)
     healthy_cols = [c for c in healthy_cols if c != col_h_rm]
-    st.info(f"Removed {col_h_rm} from Healthy group.")
+    st.info(f"Removed {col_h_rm} from {condition1} group.")
 
 if do_drop_p:
     col_p_rm = find_most_zero_na_col(merged, pe_cols)
     pe_cols = [c for c in pe_cols if c != col_p_rm]
-    st.info(f"Removed {col_p_rm} from PE group.")
+    st.info(f"Removed {col_p_rm} from {condition2} group.")
 
 all_sample_cols = healthy_cols + pe_cols
 

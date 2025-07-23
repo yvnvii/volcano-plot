@@ -331,9 +331,9 @@ with st.expander("DEBUG: raw / normalized / totals for one protein"):
         if not raw_row.empty and not norm_row.empty:
             debug_tbl = pd.DataFrame({
                 "Sample": final_cols,
-                "Raw intensity": raw_row.iloc[0]:.3f.values,
-                "Normalized": norm_row.iloc[0]:.3f.values,
+                "Raw intensity": raw_row.iloc[0].round(3).values,
                 "Total_Intensity": [totals[c] for c in final_cols],
+                "Normalized": norm_row.iloc[0].round(3).values,
                 "Group": ["Healthy" if c in healthy_cols else "PE" for c in final_cols]
             })
             st.dataframe(debug_tbl)

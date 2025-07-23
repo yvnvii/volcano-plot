@@ -301,10 +301,13 @@ st.dataframe(stats_df, use_container_width=True)
 to_csv_download(stats_df, "all_proteins_with_stats.csv")
 
 # Save figure as PNG
-png_buffer = io.BytesIO()
-
-img_bytes = fig.to_image(format="png", width=1500, height=1000, scale=2)
-st.download_button("Download volcano_plot.png", data=img_bytes, file_name="volcano_plot.png")
+svg_bytes = fig.to_image(format="svg", width=1500, height=1000, scale=2)
+st.download_button(
+    label="Download volcano_plot.svg",
+    data=svg_bytes,
+    file_name="volcano_plot.svg",
+    mime="image/svg+xml"
+)
 
 # --- Sanity check vs R
 st.subheader("Sanity Check (Compare with R)")

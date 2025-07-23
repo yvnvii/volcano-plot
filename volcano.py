@@ -194,8 +194,9 @@ numeric_cols = merged.select_dtypes(include=[np.number]).columns.tolist()
 condition1 = st.text_input("condition 1", key="cond1")
 condition2 = st.text_input("condition 2", key="cond2")
 
-healthy_cols = st.multiselect(f"{condition1}", numeric_cols, default=[], key="healthy_cols")
-pe_cols = st.multiselect(f"{condition2}", numeric_cols, default=[], key="pe_cols")
+if condition1 and condition2:
+    healthy_cols = st.multiselect(f"{condition1}", numeric_cols, default=[], key="healthy_cols")
+    pe_cols = st.multiselect(f"{condition2}", numeric_cols, default=[], key="pe_cols")
 
 if not healthy_cols or not pe_cols:
     st.warning("Select at least one column for each group.")
@@ -333,8 +334,8 @@ if prot:
 
 # --- Optional debug block
 with st.expander("DEBUG: raw / normalized / totals for one protein"):
-    debug_on = st.checkbox("Show debug table", value=False)
-    if debug_on and prot:
+    
+    if prot:
         final_cols = healthy_cols + pe_cols
 
         # Raw (unnormalized) values for selected protein

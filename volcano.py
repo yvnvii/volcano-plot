@@ -320,9 +320,16 @@ st.subheader("Sanity Check")
 prot = st.text_input("Protein Name to inspect (exact match) e.g., FABP5_HUMAN")
 if prot:
     row_py = stats_df[stats_df[protein_col] == prot][[
-        protein_col, f"avg_{condition1}", f"avg_{condition2}", "log2FC", "p_value"
+        protein_col, "avg_condition1", "avg_condition2", "log2FC", "p_value"
     ] + (["q_value"] if use_fdr else [])]
-    st.write("Python:", row_py)
+
+    st.write("Python:")
+    st.dataframe(
+        row_py.rename(columns={
+            "avg_condition1": f"avg_{condition1}",
+            "avg_condition2": f"avg_{condition2}"
+        })
+    )
 
 # --- Optional debug block
 with st.expander("DEBUG: raw / normalized / totals for one protein"):

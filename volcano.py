@@ -176,10 +176,11 @@ raw_df = merged.copy()  # before normalization
 merged.columns = make_unique(list(merged.columns))
 
 # Cast numeric
-try:
-    merged[c] = pd.to_numeric(merged[c])
-except (ValueError, TypeError):
-    pass
+for c in merged.columns:
+    try:
+        merged[c] = pd.to_numeric(merged[c])
+    except (ValueError, TypeError):
+        pass
 
 
 st.dataframe(merged, use_container_width=True)

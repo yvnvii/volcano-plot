@@ -194,9 +194,12 @@ numeric_cols = merged.select_dtypes(include=[np.number]).columns.tolist()
 condition1 = st.text_input("condition 1", key="cond1")
 condition2 = st.text_input("condition 2", key="cond2")
 
-if condition1 and condition2:
-    healthy_cols = st.multiselect(f"{condition1}", numeric_cols, default=[], key="healthy_cols")
-    pe_cols = st.multiselect(f"{condition2}", numeric_cols, default=[], key="pe_cols")
+if not condition1 and or not condition2:
+    st.warning("Name each group.")
+    st.stop()
+
+healthy_cols = st.multiselect(f"{condition1}", numeric_cols, default=[], key="healthy_cols")
+pe_cols = st.multiselect(f"{condition2}", numeric_cols, default=[], key="pe_cols")
 
 if not healthy_cols or not pe_cols:
     st.warning("Select at least one column for each group.")

@@ -202,8 +202,8 @@ if not healthy_cols or not pe_cols:
 
 # Optional: drop worst columns
 with st.expander("Optional: Drop one column per group with most 0/NA"):
-    do_drop_h = st.checkbox("Drop worst column from {condition1}", value=False)
-    do_drop_p = st.checkbox("Drop worst column from {condition2}", value=False)
+    do_drop_h = st.checkbox(f"Drop worst column from {condition1}", value=False)
+    do_drop_p = st.checkbox(f"Drop worst column from {condition2}", value=False)
 
 if do_drop_h:
     col_h_rm = find_most_zero_na_col(merged, healthy_cols)
@@ -318,7 +318,7 @@ st.subheader("Sanity Check")
 prot = st.text_input("Protein to inspect (exact match)")
 if prot:
     row_py = stats_df[stats_df[protein_col] == prot][[
-        protein_col, "avg_healthy", "avg_pe", "log2FC", "p_value"
+        protein_col, f"avg_{condition1}", f"avg_{condition2}", "log2FC", "p_value"
     ] + (["q_value"] if use_fdr else [])]
     st.write("Python:", row_py)
 
@@ -338,12 +338,12 @@ with st.expander("DEBUG: raw / normalized / totals for one protein"):
                 "Raw intensity": [f"{v:.3E}" for v in raw_row.iloc[0].values],
                 "Total_Intensity": [f"{totals[c]:.3E}" for c in final_cols],
                 "Normalized": [f"{v:.3E}" for v in norm_row.iloc[0].values],
-                "Group": ["Healthy" if c in healthy_cols else "PE" for c in final_cols]
+                "Group": [f"{condition1}" if c in healthy_cols else f"{condition2}" for c in final_cols]
             })
             st.dataframe(debug_tbl)
 
-            st.write("Python avg_healthy:", f"{norm_row[healthy_cols].mean(axis=1).iloc[0]:.3E}")
-            st.write("Python avg_pe:", f"{norm_row[pe_cols].mean(axis=1).iloc[0]:.3E}")
+            st.write(f"avg_{condition1}: ", f"{norm_row[healthy_cols].mean(axis=1).iloc[0]:.3E}")
+            st.write(f"avg_{condition2}: ", f"{norm_row[pe_cols].mean(axis=1).iloc[0]:.3E}")
         else:
             st.warning(f"Protein '{prot}' not found in raw or normalized data.")
 

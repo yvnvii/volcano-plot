@@ -1,0 +1,308 @@
+---
+title: "volcano plot template"
+author: "Yuki Ogawa"
+date: "2025-07-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#If you have not installed packages yet, delete #s and install them
+#If you have already installed them, skip this chunk
+```{r}
+
+
+# install.packages("ggplot2")
+# install.packages("ggrepel")
+# install.packages("dplyr")
+# install.packages("readxl")
+# install.packages("stats")
+
+```
+
+
+# Road Required Library
+```{r}
+library(ggplot2)
+library(ggrepel)
+library(dplyr)
+library(readxl)
+library(stats)
+```
+
+# Road Mass Spec Data
+```{r}
+#if you have several files to combine, load separately and combine later.
+#replace "path/to/your/file" with your actual file path.
+
+df1<- read_excel("path/to/your/file1")
+df2<- read_excel("path/to/your/file2")
+df3<- read_excel("path/to/your/file3")
+colnames(df1)
+colnames(df2)
+colnames(df3)
+```
+
+# Remove Unnecessary Columns
+```{r}
+#extract necessary columns (protein names, gene names, samples)
+#replace "Sample_1" with the actual column headers
+
+df1_clean <-df1 %>% dplyr::select(Protein.Names, Genes, Sample_1, Sample_2, Sample_3, Sample_4, Sample_5, Sample_6)
+df2_clean <-df2 %>% dplyr::select(Protein.Names, Sample_7, Sample_8, Sample_9, Sample_10, Sample_11, Sample_12)
+df3_clean <-df3 %>% dplyr::select(Protein.Names, Sample_13,Sample_14, Sample_15, Sample_16, Sample_17, Sample_18, Sample_19, Sample_20)
+
+#rename sample columns for clarity
+#rename(nameYouWant = existingName)
+df1_clean <- df1_clean %>% rename(H1 = Sample_1, H2 = Sample_2, H3 = Sample_3)
+df2_clean <- df2_clean %>% rename(H7 = Sample_7, H8 = Sample_8, H9 = Sample_9, S10 = Sample_10, S11 = Sample_11, S12 = Sample_12)
+df3_clean <- df3_clean %>% rename(H13 = Sample_13, H14 = Sample_14, H15 = Sample_15, H16 = Sample_16, S17 = Sample_17, S18 = Sample_18, S19 = Sample_19, S20 = Sample_20)
+
+#show
+colnames(df1_clean)
+colnames(df2_clean)
+colnames(df3_clean)
+```
+
+# Merge Results
+```{r}
+#if you have several dataframe, merge them by protein names
+#DON'T merge them by gene names as there can be multiple proteins from the same gene name
+df <- full_join(df1_clean, df2_clean, by="Protein.Names")
+df <- full_join(df, df3_clean, by="Protein.Names")
+
+#save current df in df_raw
+df_raw = df
+
+#check
+head(df)
+```
+
+# eliminate one row with most 0s or NAs from healthy
+```{r}
+# Define healthy columns
+# replace "H1", "H2".... with your column names
+
+healthy_cols <- c("H1","H2","H3","H7","H8","H9","H13","H14","H15","H16")
+
+# Count number of 0s or NAs per column
+zero_na_counts_healthy <- sapply(df[, healthy_cols], function(col) sum(col == 0 | is.na(col)))
+
+#Show the counts
+zero_na_counts_healthy
+
+# Identify the column with the most 0s/NAs
+col_to_remove_healthy <- names(which.max(zero_na_counts_healthy))
+cat("Removing column due to excess 0/NA values:", col_to_remove_healthy, "\n")
+
+# Remove this column from df and update healthy_cols
+df <- df %>% dplyr::select(-all_of(col_to_remove_healthy))
+healthy_cols <- setdiff(healthy_cols, col_to_remove_healthy)
+```
+
+#eliminate one row from severe
+```{r}
+# Define PE columns
+# replace "S4", "S5".... with your column names
+
+pe_cols <- c("S4","S5","S6","S10","S11","S12","S17","S18","S19","S20")
+
+# Count number of 0s or NAs per column
+zero_na_counts_pe <- sapply(df[, pe_cols], function(col) sum(col == 0 | is.na(col)))
+
+#Show the counts
+zero_na_counts_pe
+
+# Identify the column with the most 0s/NAs
+col_to_remove_pe <- names(which.max(zero_na_counts_pe))
+cat("Removing column due to excess 0/NA values:", col_to_remove_pe, "\n")
+
+# Remove this column from df and update pe_cols
+df <- df %>% dplyr::select(-all_of(col_to_remove_pe))
+pe_cols <- setdiff(pe_cols, col_to_remove_pe)
+
+
+```
+
+#Sample columns updated
+```{r}
+#all the sample columns without the ones dropped
+#replace the template with actual column names
+
+cols <- c("H2","H3","S4","S5","S6","H7","H8","H9",
+          "S10","S11","S12","H13","H14","H15","H16",
+          "S18","S19","S20")
+```
+
+
+# Eliminate rows with any 0s
+```{r}
+
+# Remove rows with any 0 or NA in any cells
+# keep only the rows where all cells listed in cols are non-zero and not NA.
+df <- df %>%
+  filter(if_all(all_of(cols), ~ . != 0 & !is.na(.)))
+
+#show current df
+df
+```
+
+# Normalize to TOTAL intensity
+```{r}
+
+# Compute total intensity per column
+total_intensity <- colSums(df_raw[cols], na.rm = TRUE)
+
+# Normalize each column by its total
+df[cols] <- sweep(df[cols], 2, total_intensity, FUN = "/")
+
+#show current df
+df
+```
+
+# Calculate Log2 Fold Change
+```{r}
+
+#set healthy pregnant columns and preeclampsia columns
+#replace the template with actual column names
+
+healthy_pregnant <- df[, c("H2","H3","H7","H8","H9","H13","H14","H15","H16")]
+pe <- df[, c("S4","S5","S6","S10","S11","S12","S18","S19","S20")]
+
+#compute the mean  of the samples for healthy pregnant and PE
+df$avg_pe = rowMeans(pe)
+df$avg_healthy = rowMeans(healthy_pregnant)
+
+#fold change = PE mean of each protein / healthy pregnant mean of each protein
+#take log2 of the fold change
+df$log2FC <- log2(rowMeans(pe) / rowMeans(healthy_pregnant))
+head(df)
+```
+
+# Compute p-values
+```{r}
+# 1=each row, 2=each columns
+# p-values - use t-test for significance
+
+df$p_value <- apply(df, 1, function(row) {
+  
+  #set control
+  control <- as.numeric(row[healthy_cols]) 
+  #set preeclampsia
+  preeclampsia <- as.numeric(row[pe_cols])
+  
+  
+  # Case 1: If both groups are constant (identical values), return p-value = 1 (not significant)
+  if (sd(control) == 0 & sd(preeclampsia) == 0) {
+    return(1)
+  }
+
+  # Case 2: If one group has zero variance but the other has variability
+  if (sd(control) == 0 | sd(preeclampsia) == 0) {
+    # t-test cannot be used
+    # Use Wilcoxon rank-sum test (non-parametric alternative)
+    return(wilcox.test(control, preeclampsia, exact = FALSE)$p.value)
+  }
+
+  # Case 3: Perform standard t-test if both groups have variance
+  return(t.test(control, preeclampsia)$p.value)
+})
+
+#Benjamini-Hochberg adjustment for FDR
+#df$adj_p_value <- p.adjust(df$p_value, method = "BH")
+#df$adj_p_value <- p.adjust(df$p_value, method = "bonferroni")
+
+df
+```
+
+
+#Generate Volcano Plot
+```{r}
+# transform p value into -log10 form so smaller p-values -> higher -log10 value
+df$neg_log10_pval <- -log10(df$p_value) 
+
+#define cutoff thresholds
+fc_threshold <- 1.0 #log2 fold change threshold
+pval_threshold <-0.05 # p-value threshold
+
+#upreglated proteins -> log2FC > 1.0 & p-value < 0.05
+#downregulated proteins -> log2FC < -1.0 & p-value < 0.05
+df <- df %>%
+  mutate(Significance = case_when(
+    log2FC > fc_threshold & p_value < pval_threshold ~ "Upregulated",
+    log2FC < -fc_threshold & p_value < pval_threshold ~ "Downregulated",
+    TRUE ~ "Not Significant"
+  ))
+
+# Define colors for upregulated, downregulated, and non-significant proteins
+volcano_colors <- c("Upregulated" = "red", "Downregulated" = "blue", "Not Significant" = "gray")
+
+# Show labels for upregulated or downregulated proteins
+label_data <- df %>%
+  filter(Significance != "Not Significant")
+
+
+# Generate volcano plot
+volcano_plot<- ggplot(df, aes(x = log2FC, y = neg_log10_pval, color = Significance)) +
+  geom_point(size = 2.5, alpha = 0.5) +
+  scale_color_manual(values = volcano_colors) +
+  geom_hline(yintercept = -log10(pval_threshold), linetype = "dashed", color = "black") +
+  geom_vline(xintercept = c(-fc_threshold, fc_threshold), linetype = "dashed", color = "black") +
+  
+  #labels
+  #if you do not want labels, remove this geom_text_repel chunk
+  geom_text_repel(
+    data = label_data,
+    aes(label = Genes),
+    size = 3,
+    max.overlaps = Inf,       # ensure all significant labels are shown
+    box.padding = 0.5,        # spacing around labels
+    point.padding = 0.5,      # spacing around points
+    segment.color = "black",  # draw line from label to point
+    segment.size = 0.3,　　　  # thin lines
+    min.segment.length = 0
+  ) +
+  
+  #title and legend
+  labs(title = "Volcano Plot: Control vs PE (Normalized by Total Intensity)",
+       x = "log2 Fold Change",
+       y = "-log10 p-value") +
+  theme_minimal()
+
+#show
+volcano_plot
+```
+
+```{r}
+
+#save the figure
+ggsave("/path/to/your/folder/volcano_plot.png", plot = volcano_plot, width = 15, height = 10, dpi = 300)
+
+```
+
+
+
+#Lists of upregulated and downregulated proteins
+```{r}
+# Extract upregulated proteins
+upregulated <- df %>%
+  filter(log2FC > fc_threshold & p_value < pval_threshold)
+
+# Extract downregulated proteins
+downregulated <- df %>%
+  filter(log2FC < -fc_threshold & p_value < pval_threshold)
+
+# Print upregulated proteins
+print(upregulated[, c("Protein.Names", "Genes", "avg_pe","avg_healthy","log2FC", "p_value", "neg_log10_pval")])
+
+# Print downregulated proteins
+print(downregulated[, c("Protein.Names", "Genes","avg_pe","avg_healthy", "log2FC", "p_value", "neg_log10_pval")])
+```
+
+#Save the lists
+```{r}
+write.csv(upregulated, "/path/to/your/folder/upregulated_proteins.csv", row.names = FALSE)
+write.csv(downregulated, "/path/to/your/folder/downregulated.csv", row.names = FALSE)
+```

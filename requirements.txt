@@ -1,0 +1,7 @@
+streamlit==1.47.0
+numpy==2.3.1
+pandas==2.3.1
+scipy==1.16.0
+statsmodels==0.14.4
+plotly==6.2.0
+

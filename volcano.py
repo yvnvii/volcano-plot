@@ -338,8 +338,9 @@ with st.expander("DEBUG: raw / normalized / totals for one protein"):
             })
             st.dataframe(debug_tbl)
 
-            st.write("Python avg_healthy:", norm_row[healthy_cols].mean(axis=1).iloc[0]:.3f)
-            st.write("Python avg_pe:", norm_row[pe_cols].mean(axis=1).iloc[0]:.3f)
+            st.write("Python avg_healthy:", f"{norm_row[healthy_cols].mean(axis=1).iloc[0]:.3f}")
+            st.write("Python avg_pe:", f"{norm_row[pe_cols].mean(axis=1).iloc[0]:.3f}")
+
         else:
             st.warning(f"Protein '{prot}' not found in raw or normalized data.")
 

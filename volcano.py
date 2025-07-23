@@ -323,19 +323,24 @@ with st.expander("DEBUG: raw / normalized / totals for one protein"):
     debug_on = st.checkbox("Show debug table", value=False)
     if debug_on and prot:
         final_cols = healthy_cols + pe_cols
-        raw_numeric = clean_df[final_cols].apply(pd.to_numeric, errors="coerce")
-        totals_dbg = raw_numeric.fillna(0).sum(axis=0)
 
-        row_norm = clean_df.loc[clean_df[protein_col] == prot, final_cols]
-        if not row_norm.empty:
+        # Raw (unnormalized) values for selected protein
+        raw_row = raw_df.loc[raw_df[protein_col] == prot, final_cols]
+        norm_row = clean_df.loc[clean_df[protein_col] == prot, final_cols]
+
+        if not raw_row.empty and not norm_row.empty:
             debug_tbl = pd.DataFrame({
                 "Sample": final_cols,
-                "Normalized": row_norm.T.iloc[:, 0],
-                "Total_Intensity": totals_dbg[final_cols].values,
+                "Raw intensity": raw_row.iloc[0].values,
+                "Normalized": norm_row.iloc[0].values,
+                "Total_Intensity": [totals[c] for c in final_cols],
                 "Group": ["Healthy" if c in healthy_cols else "PE" for c in final_cols]
             })
             st.dataframe(debug_tbl)
-            st.write("Python avg_healthy:", row_norm[healthy_cols].mean(axis=1).iloc[0])
-            st.write("Python avg_pe:", row_norm[pe_cols].mean(axis=1).iloc[0])
+
+            st.write("Python avg_healthy:", norm_row[healthy_cols].mean(axis=1).iloc[0])
+            st.write("Python avg_pe:", norm_row[pe_cols].mean(axis=1).iloc[0])
+        else:
+            st.warning(f"Protein '{prot}' not found in raw or normalized data.")
 
 st.success("Done! Adjust thresholds or selections above to update.")

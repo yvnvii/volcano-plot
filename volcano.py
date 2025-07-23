@@ -331,16 +331,15 @@ with st.expander("DEBUG: raw / normalized / totals for one protein"):
         if not raw_row.empty and not norm_row.empty:
             debug_tbl = pd.DataFrame({
                 "Sample": final_cols,
-                "Raw intensity": raw_row.iloc[0].round(10).values,
-                "Total_Intensity": [totals[c] for c in final_cols],
-                "Normalized": norm_row.iloc[0].round(10).values,
+                "Raw intensity": [f"{v:.3E}" for v in raw_row.iloc[0].values],
+                "Total_Intensity": [f"{totals[c]:.3E}" for c in final_cols],
+                "Normalized": [f"{v:.3E}" for v in norm_row.iloc[0].values],
                 "Group": ["Healthy" if c in healthy_cols else "PE" for c in final_cols]
             })
             st.dataframe(debug_tbl)
 
-            st.write("Python avg_healthy:", f"{norm_row[healthy_cols].mean(axis=1).iloc[0]:.5f}")
-            st.write("Python avg_pe:", f"{norm_row[pe_cols].mean(axis=1).iloc[0]:.5f}")
-
+            st.write("Python avg_healthy:", f"{norm_row[healthy_cols].mean(axis=1).iloc[0]:.3E}")
+            st.write("Python avg_pe:", f"{norm_row[pe_cols].mean(axis=1).iloc[0]:.3E}")
         else:
             st.warning(f"Protein '{prot}' not found in raw or normalized data.")
 
